@@ -6,7 +6,9 @@ import 'sysfs_service.dart';
 class HardwareMonitor extends ChangeNotifier {
   SystemState _state = const SystemState();
   Timer? _timer;
+  Timer? _resizeDebounceTimer;
   bool _refreshing = false;
+  bool _resizePaused = false;
 
   SystemState get state => _state;
 
@@ -16,7 +18,7 @@ class HardwareMonitor extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (_refreshing) return;
+    if (_refreshing || _resizePaused) return;
     _refreshing = true;
     try {
       _state = await SysfsService.readAllInIsolate();
@@ -26,9 +28,19 @@ class HardwareMonitor extends ChangeNotifier {
     }
   }
 
+  void onWindowResized({Duration debounce = const Duration(milliseconds: 400)}) {
+    _resizePaused = true;
+    _resizeDebounceTimer?.cancel();
+    _resizeDebounceTimer = Timer(debounce, () {
+      _resizePaused = false;
+      refresh();
+    });
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _resizeDebounceTimer?.cancel();
     super.dispose();
   }
 }

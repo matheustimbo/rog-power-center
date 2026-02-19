@@ -114,6 +114,15 @@ class TrayHandler with TrayListener {
 }
 
 class _AppWindowListener with WindowListener {
+  final HardwareMonitor monitor;
+
+  _AppWindowListener(this.monitor);
+
+  @override
+  void onWindowResize() {
+    monitor.onWindowResized();
+  }
+
   @override
   void onWindowClose() async {
     if (_trayAvailable) {
@@ -148,9 +157,10 @@ void main() async {
       TrayHandler(monitor: monitor, profileManager: profileManager);
   _trayAvailable = await trayHandler.initTray();
 
+  windowManager.addListener(_AppWindowListener(monitor));
+
   if (_trayAvailable) {
     await windowManager.setPreventClose(true);
-    windowManager.addListener(_AppWindowListener());
   }
 
   runApp(
