@@ -9,10 +9,11 @@ class DisplayCard extends StatelessWidget {
 
   const DisplayCard({super.key, required this.state, required this.onChanged});
 
+  static final _sysfs = SysfsService();
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sysfs = SysfsService();
 
     return StatusCard(
       title: 'Display',
@@ -27,7 +28,7 @@ class DisplayCard extends StatelessWidget {
             Switch(
               value: state.panelOd,
               onChanged: (v) async {
-                await sysfs.setPanelOd(v);
+                await _sysfs.setPanelOd(v);
                 onChanged();
               },
             ),

@@ -9,10 +9,11 @@ class BatteryCard extends StatelessWidget {
 
   const BatteryCard({super.key, required this.state, required this.onChanged});
 
+  static final _sysfs = SysfsService();
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sysfs = SysfsService();
 
     Color batColor;
     if (state.batteryPercent > 60) {
@@ -58,7 +59,7 @@ class BatteryCard extends StatelessWidget {
                   max: 100,
                   divisions: 16,
                   onChanged: (v) async {
-                    await sysfs.setChargeLimit(v.round());
+                    await _sysfs.setChargeLimit(v.round());
                     onChanged();
                   },
                 ),

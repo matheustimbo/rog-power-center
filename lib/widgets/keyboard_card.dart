@@ -43,10 +43,11 @@ class _KeyboardCardState extends State<KeyboardCard> {
     } catch (_) {}
   }
 
+  static final _sysfs = SysfsService();
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sysfs = SysfsService();
 
     const levels = ['Off', 'Low', 'Med', 'High'];
     final currentLevel = widget.state.kbdBrightness.clamp(0, 3);
@@ -72,7 +73,7 @@ class _KeyboardCardState extends State<KeyboardCard> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () async {
-                      await sysfs.setKbdBrightness(i);
+                      await _sysfs.setKbdBrightness(i);
                       widget.onChanged();
                     },
                     child: Padding(

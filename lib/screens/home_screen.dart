@@ -13,11 +13,12 @@ import '../widgets/monitor_card.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static final _profileManager = ProfileManager();
+
   @override
   Widget build(BuildContext context) {
     final monitor = context.watch<HardwareMonitor>();
     final state = monitor.state;
-    final profileManager = ProfileManager();
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -65,7 +66,7 @@ class HomeScreen extends StatelessWidget {
                 ProfileSelector(
                   currentThermal: state.thermalPolicy,
                   onProfileSelected: (profile) async {
-                    await profileManager.applyProfile(profile);
+                    await _profileManager.applyProfile(profile);
                     monitor.refresh();
                   },
                 ),
@@ -87,37 +88,31 @@ class HomeScreen extends StatelessWidget {
   Widget _buildWideLayout(state, HardwareMonitor monitor) {
     return Column(
       children: [
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: CpuCard(state: state, onChanged: monitor.refresh)),
-              const SizedBox(width: 10),
-              Expanded(child: GpuCard(state: state)),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: CpuCard(state: state, onChanged: monitor.refresh)),
+            const SizedBox(width: 10),
+            Expanded(child: GpuCard(state: state)),
+          ],
         ),
         const SizedBox(height: 10),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: BatteryCard(state: state, onChanged: monitor.refresh)),
-              const SizedBox(width: 10),
-              Expanded(child: DisplayCard(state: state, onChanged: monitor.refresh)),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: BatteryCard(state: state, onChanged: monitor.refresh)),
+            const SizedBox(width: 10),
+            Expanded(child: DisplayCard(state: state, onChanged: monitor.refresh)),
+          ],
         ),
         const SizedBox(height: 10),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: KeyboardCard(state: state, onChanged: monitor.refresh)),
-              const SizedBox(width: 10),
-              Expanded(child: MonitorCard(state: state)),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: KeyboardCard(state: state, onChanged: monitor.refresh)),
+            const SizedBox(width: 10),
+            Expanded(child: MonitorCard(state: state)),
+          ],
         ),
       ],
     );

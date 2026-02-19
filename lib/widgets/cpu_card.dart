@@ -9,10 +9,11 @@ class CpuCard extends StatelessWidget {
 
   const CpuCard({super.key, required this.state, required this.onChanged});
 
+  static final _sysfs = SysfsService();
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sysfs = SysfsService();
 
     return StatusCard(
       title: 'CPU',
@@ -25,7 +26,7 @@ class CpuCard extends StatelessWidget {
             Switch(
               value: state.cpuBoost,
               onChanged: (v) async {
-                await sysfs.setCpuBoost(v);
+                await _sysfs.setCpuBoost(v);
                 onChanged();
               },
             ),
@@ -37,14 +38,14 @@ class CpuCard extends StatelessWidget {
           value: '${state.cpuFreqMhz} MHz',
         ),
         const SizedBox(height: 8),
-        _buildEppSelector(context, sysfs, scheme),
+        _buildEppSelector(context, _sysfs, scheme),
         const SizedBox(height: 8),
         _buildPptSlider(context, 'PL1', state.pptPl1, 5, 125, (v) async {
-          await sysfs.setPptPl1(v.round());
+          await _sysfs.setPptPl1(v.round());
           onChanged();
         }),
         _buildPptSlider(context, 'PL2', state.pptPl2, 5, 150, (v) async {
-          await sysfs.setPptPl2(v.round());
+          await _sysfs.setPptPl2(v.round());
           onChanged();
         }),
       ],
