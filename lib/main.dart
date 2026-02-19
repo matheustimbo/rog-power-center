@@ -30,23 +30,23 @@ class TrayHandler with TrayListener {
     switch (menuItem.key) {
       case 'silent':
         await profileManager.applyProfile(PowerProfile.silent);
-        monitor.refresh();
+        await monitor.refresh();
         await _updateTrayMenu();
         break;
       case 'daily':
         await profileManager.applyProfile(PowerProfile.daily);
-        monitor.refresh();
+        await monitor.refresh();
         await _updateTrayMenu();
         break;
       case 'gaming':
         await profileManager.applyProfile(PowerProfile.gaming);
-        monitor.refresh();
+        await monitor.refresh();
         await _updateTrayMenu();
         break;
       case 'boost_toggle':
         final current = monitor.state.cpuBoost;
         await profileManager.sysfs.setCpuBoost(!current);
-        monitor.refresh();
+        await monitor.refresh();
         await _updateTrayMenu();
         break;
       case 'show':

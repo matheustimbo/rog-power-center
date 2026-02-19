@@ -40,11 +40,4 @@ class ProfileManager {
     await sysfs.writeBatch(batch);
   }
 
-  PowerProfile? detectCurrentProfile() {
-    final thermal = sysfs.thermalPolicy;
-    for (final p in PowerProfile.profiles) {
-      if (p.thermalPolicy == thermal) return p;
-    }
-    return null;
-  }
 }

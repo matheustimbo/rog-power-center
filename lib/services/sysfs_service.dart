@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:isolate';
+import '../models/system_state.dart';
 
 class SysfsService {
   static const _base = '/sys/devices/platform/asus-nb-wmi';
@@ -21,7 +23,7 @@ class SysfsService {
   static final _helperPath =
       '${Platform.environment['HOME']}/.local/bin/rog-power-helper';
 
-  int _readInt(String path, [int fallback = 0]) {
+  static int _readInt(String path, [int fallback = 0]) {
     try {
       final content = File(path).readAsStringSync().trim();
       return int.tryParse(content) ?? fallback;
@@ -30,12 +32,52 @@ class SysfsService {
     }
   }
 
-  String _readString(String path, [String fallback = '']) {
+  static String _readString(String path, [String fallback = '']) {
     try {
       return File(path).readAsStringSync().trim();
     } catch (_) {
       return fallback;
     }
+  }
+
+  /// Reads all sysfs values in a background isolate so the UI thread is never blocked.
+  static Future<SystemState> readAllInIsolate() {
+    return Isolate.run(_readAllState);
+  }
+
+  static SystemState _readAllState() {
+    final freq = _readInt('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq', 0);
+    final temp = _readInt('$_tempBase/temp1_input', 0);
+    final pw = _readInt('/sys/class/power_supply/BAT0/power_now', 0);
+    return SystemState(
+      thermalPolicy: _readInt(_thermal),
+      cpuBoost: _readInt(_noTurbo) == 0,
+      epp: _readString(
+        '/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference',
+        'balance_performance',
+      ),
+      pptPl1: _readInt(_pptPl1),
+      pptPl2: _readInt(_pptPl2),
+      nvBoost: _readInt(_nvBoost),
+      nvTemp: _readInt(_nvTemp),
+      panelOd: _readInt(_panelOd) == 1,
+      kbdBrightness: _readInt(_kbdBright),
+      batteryPercent: _readInt('/sys/class/power_supply/BAT0/capacity', 0),
+      batteryStatus: _readString('/sys/class/power_supply/BAT0/status', 'Unknown'),
+      chargeLimit: _readInt(_chargeLimit, 100),
+      powerDraw: pw / 1000000.0,
+      cpuTemp: temp ~/ 1000,
+      fan1Rpm: _readInt('$_fanBase/fan1_input'),
+      fan2Rpm: _readInt('$_fanBase/fan2_input'),
+      fan3Rpm: _readInt('$_fanBase/fan3_input'),
+      dgpuDisabled: _readInt(_dgpuDisable) == 1,
+      gpuMux: _readInt(_gpuMux),
+      cpuFreqMhz: freq ~/ 1000,
+      governor: _readString(
+        '/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor',
+        'powersave',
+      ),
+    );
   }
 
   Future<bool> _writeValue(String path, dynamic value) async {
@@ -68,56 +110,6 @@ class SysfsService {
     } catch (_) {
       return false;
     }
-  }
-
-  // === READ ===
-
-  int get thermalPolicy => _readInt(_thermal);
-  bool get cpuBoost => _readInt(_noTurbo) == 0;
-  int get pptPl1 => _readInt(_pptPl1);
-  int get pptPl2 => _readInt(_pptPl2);
-  int get nvBoost => _readInt(_nvBoost);
-  int get nvTemp => _readInt(_nvTemp);
-  bool get panelOd => _readInt(_panelOd) == 1;
-  int get kbdBrightness => _readInt(_kbdBright);
-  bool get dgpuDisabled => _readInt(_dgpuDisable) == 1;
-  int get gpuMux => _readInt(_gpuMux);
-  int get chargeLimit => _readInt(_chargeLimit, 100);
-
-  String get epp => _readString(
-        '/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference',
-        'balance_performance',
-      );
-
-  String get governor => _readString(
-        '/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor',
-        'powersave',
-      );
-
-  int get cpuFreqMhz {
-    final freq =
-        _readInt('/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq', 0);
-    return freq ~/ 1000;
-  }
-
-  int get cpuTemp {
-    final temp = _readInt('$_tempBase/temp1_input', 0);
-    return temp ~/ 1000;
-  }
-
-  int get fan1Rpm => _readInt('$_fanBase/fan1_input');
-  int get fan2Rpm => _readInt('$_fanBase/fan2_input');
-  int get fan3Rpm => _readInt('$_fanBase/fan3_input');
-
-  int get batteryPercent =>
-      _readInt('/sys/class/power_supply/BAT0/capacity', 0);
-
-  String get batteryStatus =>
-      _readString('/sys/class/power_supply/BAT0/status', 'Unknown');
-
-  double get powerDraw {
-    final pw = _readInt('/sys/class/power_supply/BAT0/power_now', 0);
-    return pw / 1000000.0;
   }
 
   // === SINGLE WRITES (for toggles/sliders) ===
